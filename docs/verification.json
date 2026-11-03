@@ -1,0 +1,36 @@
+{
+  "excelBuild": 20527.0,
+  "cases": [
+    {
+      "name": "utf8_no_bom",
+      "seconds": 6.19,
+      "originalUnchanged": true,
+      "passed": true
+    },
+    {
+      "name": "utf8_bom",
+      "seconds": 2.45,
+      "originalUnchanged": true,
+      "passed": true
+    },
+    {
+      "name": "gbk",
+      "seconds": 0.9,
+      "originalUnchanged": true,
+      "passed": true
+    },
+    {
+      "name": "utf16_bom",
+      "seconds": 2.43,
+      "originalUnchanged": true,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "chineseLabels": "中文",
+  "excelVersion": "16.0",
+  "verifiedDate": "2026-11-03",
+  "architecture": "x64",
+  "normalShellOpen": true,
+  "globalMacroSecurityChanged": false
+}

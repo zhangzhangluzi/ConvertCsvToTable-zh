@@ -6,10 +6,11 @@ import subprocess
 ROOT = Path(__file__).resolve().parent
 BUILD = ROOT / "build"
 BUILD.mkdir(exist_ok=True)
+UPSTREAM_REVISION = "ea21096348933bca24f8162f71bac3f54ac9fafb"
 
 
 def upstream(path):
-    raw = subprocess.check_output(["git", "show", f"origin/master:{path}"], cwd=ROOT)
+    raw = subprocess.check_output(["git", "show", f"{UPSTREAM_REVISION}:{path}"], cwd=ROOT)
     return raw.decode("cp932").replace("\r\r\n", "\n").replace("\r\n", "\n")
 
 

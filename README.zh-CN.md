@@ -22,9 +22,9 @@
 
 ## 源码
 
-修改在 `codex/chinese-localization` 分支；运行 `python localize.py` 可从 `origin/master` 重新生成汉化源码。修改过的源码文件使用 UTF-8；`build/*.code.txt` 为供 VBA 编辑器使用的 ASCII 代码，避免工程代码页造成乱码。
+中文版发布在本仓库的 `main` 分支。完整克隆后，运行 `python localize.py` 可从固定的上游提交 `ea21096348933bca24f8162f71bac3f54ac9fafb` 重新生成汉化源码。修改过的源码文件使用 UTF-8；`build/*.code.txt` 为供 VBA 编辑器使用的 ASCII 代码，避免工程代码页造成乱码。
 
-最终安装与测试结果见本目录下的 `build/verification.json`。
+可公开的验证记录见 [`docs/verification.json`](docs/verification.json)。本机安装记录保存在被 Git 忽略的 `build` 目录。
 
 2026-11-03 已在本机 64 位 Microsoft Excel 16.0（Build 20527）验证：UTF-8 无 BOM、UTF-8 BOM、GBK、UTF-16 BOM 四组文件通过中文、逗号、引号、单元格换行、金额及原文件不变检查；安装后的系统默认打开流程亦通过。没有修改全局宏安全设置或 VBA 工程访问设置。
 
