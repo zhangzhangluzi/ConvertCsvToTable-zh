@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+ï»¿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -64,72 +64,119 @@ Public Function ReadCsvText( _
     Dim ResultByteBuffer() As Byte
     Dim Counter As Long
 
-    ' ƒtƒ@ƒCƒ‹‚ğƒoƒCƒiƒŠ‚Æ‚µ‚ÄƒoƒCƒg”z—ñ‚É“Ç‚İ‚İ
+    ' ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒã‚¤ãƒŠãƒªã¨ã—ã¦ãƒã‚¤ãƒˆé…åˆ—ã«èª­ã¿è¾¼ã¿
     FileNumber = FreeFile
     Open Filepath For Binary As #FileNumber
     ByteLength = LOF(FileNumber)
+    If ByteLength = 0 Then
+        Close #FileNumber
+        Exit Function
+    End If
     ReDim ByteBuffer(0 To ByteLength - 1)
     Get #FileNumber, 1, ByteBuffer
     Close #FileNumber
-    
-    If FileCharset = "AUTO" And 3 <= ByteLength Then
-        ' BOM •t‚Ì‚à‚Ì‚Í UTF-8 ‚Æ‚İ‚È‚·
-        If ByteBuffer(0) = &HEF And ByteBuffer(1) = &HBB And ByteBuffer(2) = &HBF Then
+
+    If FileCharset = "AUTO" Then
+        If IsValidUtf8(ByteBuffer) Then
             FileCharset = "utf-8"
+        ElseIf ByteLength >= 2 Then
+            If ByteBuffer(0) = &HFF And ByteBuffer(1) = &HFE Then
+                FileCharset = "unicode"
+            ElseIf ByteBuffer(0) = &HFE And ByteBuffer(1) = &HFF Then
+                FileCharset = "unicodeFFFE"
+            Else
+                FileCharset = "gb2312"
+            End If
+        Else
+            FileCharset = "gb2312"
         End If
     End If
 
     Set AdodbStream = CreateObject("ADODB.Stream")
     With AdodbStream
         .Mode = 3 ' adModeRead(2), adModeReadWrite(3)
-        
+
         .Open
-        
+
         '.Type = 2 ' adTypeBinary(1), adTypeText(2)
         '.Charset = "UTF-8"
         '.LoadFromFile Filepath
-        '¨ .LoadFromFile ‚¾‚ÆAŠJ‚¢‚Ä‚¢‚éƒtƒ@ƒCƒ‹‚Í“Ç‚İ‚ß‚¸
-        '  uƒtƒ@ƒCƒ‹‚ğŠJ‚¯‚Ü‚¹‚ñ‚Å‚µ‚½(3002)(adErrOpeningFile)vi.Mode=3‚Ìê‡j
-        '  u‚±‚ÌƒRƒ“ƒeƒLƒXƒg‚Å‘€ì‚Í‹–‰Â‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ(3219)(adErrIllegalOperation)vi.Mode=2‚Ìê‡j
-        '   ‚Ì‚æ‚¤‚ÈƒGƒ‰[‚Æ‚È‚Á‚Ä‚µ‚Ü‚¤
-        '¨ˆê“xƒoƒCƒiƒŠ‚Å“Ç‚İ‚ñ‚¾‚à‚Ì‚ğ ADODB.Stream ‚É‘‚«‚İA‚±‚ê‚ğƒeƒLƒXƒg‚Æ‚µ‚Ä“Ç‚İo‚·
-        
+        'â†’ .LoadFromFile ã ã¨ã€é–‹ã„ã¦ã„ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã¯èª­ã¿è¾¼ã‚ãš
+        '  ã€Œãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã‘ã¾ã›ã‚“ã§ã—ãŸ(3002)(adErrOpeningFile)ã€ï¼ˆ.Mode=3ã®å ´åˆï¼‰
+        '  ã€Œã“ã®ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã§æ“ä½œã¯è¨±å¯ã•ã‚Œã¦ã„ã¾ã›ã‚“(3219)(adErrIllegalOperation)ã€ï¼ˆ.Mode=2ã®å ´åˆï¼‰
+        '   ã®ã‚ˆã†ãªã‚¨ãƒ©ãƒ¼ã¨ãªã£ã¦ã—ã¾ã†
+        'â†’ä¸€åº¦ãƒã‚¤ãƒŠãƒªã§èª­ã¿è¾¼ã‚“ã ã‚‚ã®ã‚’ ADODB.Stream ã«æ›¸ãè¾¼ã¿ã€ã“ã‚Œã‚’ãƒ†ã‚­ã‚¹ãƒˆã¨ã—ã¦èª­ã¿å‡ºã™
+
         .Type = 1 ' adTypeBinary(1), adTypeText(2)
         .Write ByteBuffer
-        
+
         .Position = 0
         .Type = 2 ' adTypeBinary(1), adTypeText(2)
         .Charset = IIf(FileCharset = "AUTO", "_autodetect_all", FileCharset) ' "Unicode"(default:UTF-16), "Shift-JIS", "UTF-8", "_autodetect_all",
-        
+
         TextBuffer = .ReadText(-1) 'adReadAll(-1) adReadLine(-2)
         .Close
     End With
 
-    TextBuffer = Replace(Replace(TextBuffer, vbCrLf, vbLf), vbCr, vbLf) ' ‰üs‚ğ LF ‚É“ˆê
+    TextBuffer = Replace(Replace(TextBuffer, vbCrLf, vbLf), vbCr, vbLf) ' æ”¹è¡Œã‚’ LF ã«çµ±ä¸€
 
     Dim Reg As Object: Set Reg = CreateObject("VBScript.RegExp")
     With Reg
         .Global = True
         .MultiLine = False
 
-        ' UTF-16 BOM(&HFF, &HFE) ‚ª‚Â‚¢‚Ä‚¢‚éê‡ENULL •¶š‚ªŠÜ‚Ü‚ê‚Ä‚¢‚éê‡‚Íæ‚èœ‚­
-        ' ¦ƒtƒ@ƒCƒ‹‚ÌÅŒã‚É NULL •¶š‚ª‚ ‚é‚ÆAPower Query ‚Ì Binary.InferContentType “™‚ªŒë“®ì‚·‚é–Í—l
+        ' UTF-16 BOM(&HFF, &HFE) ãŒã¤ã„ã¦ã„ã‚‹å ´åˆãƒ»NULL æ–‡å­—ãŒå«ã¾ã‚Œã¦ã„ã‚‹å ´åˆã¯å–ã‚Šé™¤ã
+        ' â€»ãƒ•ã‚¡ã‚¤ãƒ«ã®æœ€å¾Œã« NULL æ–‡å­—ãŒã‚ã‚‹ã¨ã€Power Query ã® Binary.InferContentType ç­‰ãŒèª¤å‹•ä½œã™ã‚‹æ¨¡æ§˜
         .Pattern = "(^\ufeff|\u0000+)"
         TextBuffer = .Replace(TextBuffer, "")
 
-        ' ƒtƒ@ƒCƒ‹‚ÌÅŒã‚ª‰üs‚Ìê‡‚Í‚±‚ê‚ğæ‚èœ‚­
-        ' ¦ƒtƒ@ƒCƒ‹‚ÌÅŒã‚É‰üs‚ª‚ ‚é‚ÆA—]•ª‚Ès‚ª‚Å‚«‚Ä‚µ‚Ü‚¤‚½‚ß
+        ' ãƒ•ã‚¡ã‚¤ãƒ«ã®æœ€å¾ŒãŒæ”¹è¡Œã®å ´åˆã¯ã“ã‚Œã‚’å–ã‚Šé™¤ã
+        ' â€»ãƒ•ã‚¡ã‚¤ãƒ«ã®æœ€å¾Œã«æ”¹è¡ŒãŒã‚ã‚‹ã¨ã€ä½™åˆ†ãªè¡ŒãŒã§ãã¦ã—ã¾ã†ãŸã‚
         .Pattern = "(\n+$)"
         TextBuffer = .Replace(TextBuffer, "")
     End With
- 
+
     If DebugIsValid Then
         Debug.Print Left(TextBuffer, 100)
         Debug.Print Right(TextBuffer, 100)
         Debug.Print UBound(ByteBuffer) & " vs " & LenB(TextBuffer)
     End If
-    
+
     ReadCsvText = TextBuffer
+End Function
+
+
+' ä¸¥æ ¼æ ¡éªŒ UTF-8ï¼šæ‹’ç»æˆªæ–­ã€è¿‡é•¿ç¼–ç ã€ä»£ç†åŒºå’Œè¶…å‡º Unicode èŒƒå›´çš„å­—èŠ‚ã€‚
+Private Function IsValidUtf8(ByRef Data() As Byte) As Boolean
+    Dim Index As Long, Last As Long, Lead As Long, Needed As Long, Offset As Long
+    Last = UBound(Data)
+    Index = LBound(Data)
+    Do While Index <= Last
+        Lead = CLng(Data(Index))
+        If Lead < &H80 Then
+            Needed = 0
+        ElseIf Lead >= &HC2 And Lead <= &HDF Then
+            Needed = 1
+        ElseIf Lead >= &HE0 And Lead <= &HEF Then
+            Needed = 2
+        ElseIf Lead >= &HF0 And Lead <= &HF4 Then
+            Needed = 3
+        Else
+            Exit Function
+        End If
+        If Index + Needed > Last Then Exit Function
+        For Offset = 1 To Needed
+            If Data(Index + Offset) < &H80 Or Data(Index + Offset) > &HBF Then Exit Function
+        Next Offset
+        If Needed > 0 Then
+            If Lead = &HE0 And Data(Index + 1) < &HA0 Then Exit Function
+            If Lead = &HED And Data(Index + 1) > &H9F Then Exit Function
+            If Lead = &HF0 And Data(Index + 1) < &H90 Then Exit Function
+            If Lead = &HF4 And Data(Index + 1) > &H8F Then Exit Function
+        End If
+        Index = Index + Needed + 1
+    Loop
+    IsValidUtf8 = True
 End Function
 
 Public Sub AnalyzeCsvText( _
@@ -153,64 +200,64 @@ Public Sub AnalyzeCsvText( _
     Dim ColumnMarks As Variant
     Dim ColumnMark As Variant
     Dim StringColumnCounter As Long
-    
+
     TextBuffer = CsvText
     'If Right(TextBuffer, 1) <> vbLf Then TextBuffer = TextBuffer & vbLf
-    
+
     Set Reg = CreateObject("VBScript.RegExp")
     With Reg
         .Global = True
         .MultiLine = False
 
-        ' "`" ‚ÅŠ‡‚ç‚ê‚½ˆê•¶šˆÈã‚Ìƒf[ƒ^‚ğ S ‚É’uŠ·
+        ' "ï½" ã§æ‹¬ã‚‰ã‚ŒãŸä¸€æ–‡å­—ä»¥ä¸Šã®ãƒ‡ãƒ¼ã‚¿ã‚’ S ã«ç½®æ›
         .Pattern = "[\x20\f\r\t\v]*""(?:""""|[^""])+""[\x20\f\r\t\v]*([,\n]|$)"
         TextBuffer = .Replace(TextBuffer, "S$1")
 
-        ' —]•ª‚È " ‹y‚Ñ‹ó”’‚ğíœ
+        ' ä½™åˆ†ãª " åŠã³ç©ºç™½ã‚’å‰Šé™¤
         .Pattern = "[""\x20\f\r\t\v]+"
         TextBuffer = .Replace(TextBuffer, "")
-        
-        ' •¶š N ‚ğ S ‚É’uŠ·
+
+        ' æ–‡å­— N ã‚’ S ã«ç½®æ›
         TextBuffer = Replace(TextBuffer, "N", "S")
 
-        ' ”’l‚ğ N ‚É’uŠ·
+        ' æ•°å€¤ã‚’ N ã«ç½®æ›
         .Pattern = "[\-+]?\d+\.?\d*(?:E[\-+]?\d+)?([,\n]|$)"
         TextBuffer = .Replace(TextBuffer, "N$1")
 
-        ' ˆê•¶šˆÈã‚Ìƒf[ƒ^‚ğ S ‚É’uŠ·
+        ' ä¸€æ–‡å­—ä»¥ä¸Šã®ãƒ‡ãƒ¼ã‚¿ã‚’ S ã«ç½®æ›
        .Pattern = "(?:[^,\nNS]|[^,\n]{2,})([,\n]|$)"
         TextBuffer = .Replace(TextBuffer, "S$1")
     End With
-    
+
     MaxRowNumber = 0
     MaxColumnNumber = 0
     PersumedHeaderRow = 0
     PresumedHeaderColumnNumber = 0
-    
+
     Reg.Pattern = "[NS]"
     TextLines = Split(TextBuffer, vbLf)
     For Each TempLine In TextLines
         MaxRowNumber = MaxRowNumber + 1
-        
-        ' s“à‚Ìƒf[ƒ^”iƒJƒ‰ƒ€”j‚ğæ“¾
+
+        ' è¡Œå†…ã®ãƒ‡ãƒ¼ã‚¿æ•°ï¼ˆã‚«ãƒ©ãƒ æ•°ï¼‰ã‚’å–å¾—
         TempColumnNumber = Len(TempLine) - Len(Replace(TempLine, ",", "")) + 1
         If MaxColumnNumber < TempColumnNumber Then
             MaxColumnNumber = TempColumnNumber
         End If
 
         If MaxRowNumber <= SearchHeaderRowLimit Then
-            ' s“à‚Ì—LŒøƒf[ƒ^”i‹óƒf[ƒ^ˆÈŠOj‚ğæ“¾
+            ' è¡Œå†…ã®æœ‰åŠ¹ãƒ‡ãƒ¼ã‚¿æ•°ï¼ˆç©ºãƒ‡ãƒ¼ã‚¿ä»¥å¤–ï¼‰ã‚’å–å¾—
             TempFilledNumber = Len(TempLine) - Len(Reg.Replace(TempLine, ""))
             If (PresumedHeaderColumnNumber < MaxColumnNumber) And (TempFilledNumber = MaxColumnNumber) Then
-                ' ‘S‚Ä‚ÌƒJƒ‰ƒ€‚ª—LŒøƒf[ƒ^i‹óƒf[ƒ^ˆÈŠOj‚Å‚ ‚éÅ‰‚Ìs‚ğƒwƒbƒ_s‚Æ‚İ‚È‚·
+                ' å…¨ã¦ã®ã‚«ãƒ©ãƒ ãŒæœ‰åŠ¹ãƒ‡ãƒ¼ã‚¿ï¼ˆç©ºãƒ‡ãƒ¼ã‚¿ä»¥å¤–ï¼‰ã§ã‚ã‚‹æœ€åˆã®è¡Œã‚’ãƒ˜ãƒƒãƒ€è¡Œã¨ã¿ãªã™
                 PresumedHeaderColumnNumber = MaxColumnNumber
                 PersumedHeaderRow = MaxRowNumber
             End If
         End If
     Next TempLine
-    
+
     If PresumedHeaderColumnNumber < MaxColumnNumber Then
-        ' ƒwƒbƒ_‚Æ‚İ‚È‚µ‚½s‚Ìƒf[ƒ^”‚ªÅI“I‚ÈÅ‘åƒf[ƒ^”‚É–‚½‚È‚¢ê‡‚É‚Íƒwƒbƒ_s–³‚µ‚Æ‚·‚é
+        ' ãƒ˜ãƒƒãƒ€ã¨ã¿ãªã—ãŸè¡Œã®ãƒ‡ãƒ¼ã‚¿æ•°ãŒæœ€çµ‚çš„ãªæœ€å¤§ãƒ‡ãƒ¼ã‚¿æ•°ã«æº€ãŸãªã„å ´åˆã«ã¯ãƒ˜ãƒƒãƒ€è¡Œç„¡ã—ã¨ã™ã‚‹
         PersumedHeaderRow = 0
     End If
 
@@ -280,21 +327,21 @@ Public Function CreateTextFile( _
                     .Write TextContent
                     .Close
                 End With
-            
+
             Case Else
                 Set AdodbStream = CreateObject("ADODB.Stream")
                 With AdodbStream
                     .Mode = 3 ' adModeRead(2), adModeReadWrite(3)
-                    
+
                     .Open
-                    
+
                     .Type = 2 ' adTypeBinary(1), adTypeText(2)
                     .Charset = FileCharset ' "Unicode"(default:UTF-16), "Shift-JIS", "UTF-8", "_autodetect_all",
-                    
+
                     .WriteText TextContent, 0 ' adWriteChar(0), adWriteLine(1)
 
                     If WithoutBOM And 0 < LenB(TextContent) Then
-                        ' Šo‘FBOM•tƒtƒ@ƒCƒ‹‚ğ PowerQuery ‚Åˆ—‚·‚é‚ÆiCsv.Document()“™jŒë“®ìi“ª‚ÉƒSƒ~‚ª•t‚¢‚½ó‘Ô‚É‚È‚éj
+                        ' è¦šæ›¸ï¼šBOMä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ PowerQuery ã§å‡¦ç†ã™ã‚‹ã¨ï¼ˆCsv.Document()ç­‰ï¼‰èª¤å‹•ä½œï¼ˆé ­ã«ã‚´ãƒŸãŒä»˜ã„ãŸçŠ¶æ…‹ã«ãªã‚‹ï¼‰
                         Dim ByteBuffer() As Byte
 
                         .Position = 0
@@ -315,7 +362,7 @@ Public Function CreateTextFile( _
                         End With
                     Else
                         .SaveToFile Filepath, 2 ' adSaveCreateNotExist(1), adSaveCreateOverWrite(2)
-                        ' Šo‘FadTypeText‚ÌÛ‚É‚ÍiBOM‚ª‚ ‚è‚¤‚éƒtƒH[ƒ}ƒbƒg‚È‚ç‚ÎjBOM•t‚«‚Å•Û‘¶‚³‚ê‚é
+                        ' è¦šæ›¸ï¼šadTypeTextã®éš›ã«ã¯ï¼ˆBOMãŒã‚ã‚Šã†ã‚‹ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆãªã‚‰ã°ï¼‰BOMä»˜ãã§ä¿å­˜ã•ã‚Œã‚‹
                         .Close
                     End If
                 End With
@@ -361,11 +408,11 @@ Public Function ImportCsvFromFile( _
     If BaseSheet Is Nothing Then
         'Set BaseSheet = ActiveWorkbook.ActiveSheet
         Set BaseSheet = ActiveWorkbook.Worksheets(ActiveWorkbook.Worksheets.Count)
-        ' TODO: •Ö‹XãAˆê”Ô‰E’[‚É‚ ‚éƒV[ƒg‚ğŠî€iŒ³‚Æ‚È‚éCSVj‚Æ‚µ‚Ä‚¢‚é‚ªA•À‚Ñ•Ï‚¦‚ç‚ê‚Ä‚¢‚½‚çŒë“®ì‚µ‚¤‚é
+        ' TODO: ä¾¿å®œä¸Šã€ä¸€ç•ªå³ç«¯ã«ã‚ã‚‹ã‚·ãƒ¼ãƒˆã‚’åŸºæº–ï¼ˆå…ƒã¨ãªã‚‹CSVï¼‰ã¨ã—ã¦ã„ã‚‹ãŒã€ä¸¦ã³å¤‰ãˆã‚‰ã‚Œã¦ã„ãŸã‚‰èª¤å‹•ä½œã—ã†ã‚‹
     End If
     Set TargetBook = BaseSheet.Parent
 
-'   ¦Šo‘FQuery ‚Íc‚³‚È‚¢‚æ‚¤‚É•ÏX‚µ‚½‚½‚ßA‚±‚ê‚Å‚Í”»’è‚Å‚«‚È‚­‚È‚Á‚½
+'   â€»è¦šæ›¸ï¼šQuery ã¯æ®‹ã•ãªã„ã‚ˆã†ã«å¤‰æ›´ã—ãŸãŸã‚ã€ã“ã‚Œã§ã¯åˆ¤å®šã§ããªããªã£ãŸ
 '    On Error Resume Next
 '    Set TargetQuery = TargetBook.Queries("CSVTable")
 '    On Error GoTo 0
@@ -381,21 +428,21 @@ Public Function ImportCsvFromFile( _
             Case "#", "@"
                 TempString = Right(TempSheet.Name, Len(TempSheet.Name) - 1)
                 If TempString = Left(BaseSheet.Name, Len(TempString)) Then
-                    ' •ÏŠ·Ï‚İƒV[ƒg‚ª‘¶İ‚·‚éê‡‚ÍI—¹
-                    ' TODO: ƒV[ƒg–¼‚ª•ÏX‚³‚ê‚Ä‚¢‚½‚èŠî€ƒV[ƒg‚Ì‘I•Ê‚ªŒë‚Á‚Ä‚¢‚½‚çŒë“®ì‚µ‚¤‚é
+                    ' å¤‰æ›æ¸ˆã¿ã‚·ãƒ¼ãƒˆãŒå­˜åœ¨ã™ã‚‹å ´åˆã¯çµ‚äº†
+                    ' TODO: ã‚·ãƒ¼ãƒˆåãŒå¤‰æ›´ã•ã‚Œã¦ã„ãŸã‚ŠåŸºæº–ã‚·ãƒ¼ãƒˆã®é¸åˆ¥ãŒèª¤ã£ã¦ã„ãŸã‚‰èª¤å‹•ä½œã—ã†ã‚‹
                     Set ImportCsvFromFile = Nothing
                     Set ExtraDataRange = Nothing
                     Exit Function
                 End If
         End Select
     Next TempSheet
-    
+
     Set TargetSheet = CreateCsvSheet(BaseSheet:=BaseSheet)
     Set TargetRange = TargetSheet.Range("$A$1")
 
     Set TargetBook = TargetSheet.Parent
     Set TargetRange = TargetRange.Resize(1, 1)
-    
+
     Select Case LCase(FileCharset)
         Case "shift-jis", "shift_jis"
             CsvCodePage = 932
@@ -405,7 +452,7 @@ Public Function ImportCsvFromFile( _
             CsvCodePage = 1200
     End Select
 
-' ¦Šo‘: Connection:="TEXT;<Filepath>" ‚ğg—p‚µ‚½•û–@‚¾‚ÆAƒZƒ‹“à‰üs‚ª‚¤‚Ü‚­ˆ—‚³‚ê‚È‚¢–Í—l
+' â€»è¦šæ›¸: Connection:="TEXT;<Filepath>" ã‚’ä½¿ç”¨ã—ãŸæ–¹æ³•ã ã¨ã€ã‚»ãƒ«å†…æ”¹è¡ŒãŒã†ã¾ãå‡¦ç†ã•ã‚Œãªã„æ¨¡æ§˜
 '    Set TargetQueryTable = TargetSheet.QueryTables.Add( _
 '        Connection:="TEXT;" & Filepath, _
 '        Destination:=TargetRange _
@@ -414,7 +461,7 @@ Public Function ImportCsvFromFile( _
 '    With TargetQueryTable
 '        On Error Resume Next
 '        .TextFilePlatform = CsvCodePage
-'        ' TODO: 1200 (UTF-16LE) ‚ğw’è‚·‚é‚ÆƒGƒ‰[‚É‚È‚Á‚Ä‚µ‚Ü‚¤
+'        ' TODO: 1200 (UTF-16LE) ã‚’æŒ‡å®šã™ã‚‹ã¨ã‚¨ãƒ©ãƒ¼ã«ãªã£ã¦ã—ã¾ã†
 '        On Error GoTo 0
 '        .TextFileParseType = xlDelimited
 '        .TextFileCommaDelimiter = True
@@ -434,7 +481,7 @@ Public Function ImportCsvFromFile( _
     TimeMeasurement.GetLapTime Header:="  Pretreatment: "
 
     If MaxColumnNumber < 0 Then
-        ' Å‘åƒf[ƒ^”iƒJƒ‰ƒ€”j‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í©“®æ“¾i‚½‚¾‚µŠÔ‚ª‚©‚©‚éj
+        ' æœ€å¤§ãƒ‡ãƒ¼ã‚¿æ•°ï¼ˆã‚«ãƒ©ãƒ æ•°ï¼‰ãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯è‡ªå‹•å–å¾—ï¼ˆãŸã ã—æ™‚é–“ãŒã‹ã‹ã‚‹ï¼‰
         QueryMformula = _
             "let" & _
             "   Source = Binary.InferContentType(" & _
@@ -444,9 +491,9 @@ Public Function ImportCsvFromFile( _
             "   FiltersRows = Table.SelectRows(CsvPotentialDelimiters, each ([PotentialDelimiter] = "","") and ([QuoteStyle] = 0))," & _
             "   MaxColumns = FiltersRows{0}[MaxColumns]" & _
             "in MaxColumns"
-    
+
         Set TargetQuery = TargetBook.Queries.Add("MaxColumns", QueryMformula)
-    
+
         Set TargetTable = TargetSheet.ListObjects.Add( _
             SourceType:=xlSrcExternal, _
             Source:= _
@@ -458,9 +505,9 @@ Public Function ImportCsvFromFile( _
             xlListObjectHasHeaders:=xlNo, _
             Destination:=TargetRange _
         )
-    
+
         Set TargetQueryTable = TargetTable.QueryTable
-    
+
         With TargetQueryTable
             .CommandType = xlCmdSql
             .CommandText = Array("SELECT * FROM [MaxColumns]")
@@ -482,12 +529,12 @@ Public Function ImportCsvFromFile( _
         For Each TargetConnection In TargetBook.Connections
             TargetConnection.Delete
         Next TargetConnection
-    
+
         TargetQuery.Delete
 
         MaxColumnNumber = CLng(TargetRange.Offset(1, 0).Value)
     End If
-    
+
     If DebugIsValid Then Debug.Print "MaxColumnNumber=" & CStr(MaxColumnNumber)
 
     TimeMeasurement.GetLapTime Header:="  Get MaxColumnNumber: "
@@ -495,7 +542,7 @@ Public Function ImportCsvFromFile( _
     TargetSheet.Cells.Delete
     Set TargetRange = TargetSheet.Range("$A$1")
 
-    ' Šo‘F æ“ªs‚Éƒwƒbƒ_‚ª‚ ‚é‚Æ‚ÍŒÀ‚ç‚È‚¢‚½‚ßATable.PromoteHeaders(Source, [PromoteAllScalars=true]) ‚É‚æ‚éƒwƒbƒ_¸Ši‚Ís‚í‚È‚¢
+    ' è¦šæ›¸ï¼š å…ˆé ­è¡Œã«ãƒ˜ãƒƒãƒ€ãŒã‚ã‚‹ã¨ã¯é™ã‚‰ãªã„ãŸã‚ã€Table.PromoteHeaders(Source, [PromoteAllScalars=true]) ã«ã‚ˆã‚‹ãƒ˜ãƒƒãƒ€æ˜‡æ ¼ã¯è¡Œã‚ãªã„
     QueryMformula = _
         "let" & _
         "   CSVTable = Csv.Document(" & _
@@ -527,7 +574,7 @@ Public Function ImportCsvFromFile( _
     TargetTable.Name = "CSVTable0"
 
     Set TargetQueryTable = TargetTable.QueryTable
-    
+
     With TargetQueryTable
         .CommandType = xlCmdSql
         .CommandText = Array("SELECT * FROM [CSVTable]")
@@ -574,25 +621,25 @@ Public Function ImportCsvFromFile( _
 
     Set SourceSheet = TargetSheet
     Set SourceRange = TargetRange.Offset(1, 0).Resize(TargetRange.Rows.Count - 1, TargetRange.Columns.Count)
-    
+
     If HeaderRow < 0 Then
-        ' ƒwƒbƒ_s‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚É‚Í©“®ŒŸõ
+        ' ãƒ˜ãƒƒãƒ€è¡ŒãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã«ã¯è‡ªå‹•æ¤œç´¢
         If SourceRange.Rows.Count < SearchHeaderRowLimit Then
             SearchHeaderRowLimit = SourceRange.Rows.Count
         End If
-    
+
         If SearchHeaderRowLimit < 1 Or SourceRange.Cells.Count < 2 Then
             Exit Function
         End If
-        
+
         SourceValues = SourceRange.Resize(SearchHeaderRowLimit, SourceRange.Columns.Count)
         HeaderRow = 0
-    
+
         For IndexY = LBound(SourceValues, 1) To UBound(SourceValues, 1)
             EmptyCellExists = False
             For IndexX = LBound(SourceValues, 2) To UBound(SourceValues, 2)
                 If DebugIsValid Then Debug.Print IndexY, IndexX, SourceValues(IndexY, IndexX)
-    
+
                 If SourceValues(IndexY, IndexX) = "" Then
                     EmptyCellExists = True
                     Exit For
@@ -619,7 +666,7 @@ Public Function ImportCsvFromFile( _
     Dim TempRange As Range
 
     Set DataSheet = CreateCsvSheet(BaseSheet:=BaseSheet, SheetNamePrefix:="#")
-    
+
     SourceRange.Copy Destination:=DataSheet.Range("$A$1")
     Set DataRange = DataSheet.Range("$A$1").Resize(SourceRange.Rows.Count, SourceRange.Columns.Count)
     DataRange.ClearFormats
@@ -665,7 +712,7 @@ Public Function ImportCsvFromFile( _
         Next ColumnAttribute
         On Error GoTo 0
     End If
-    
+
     If AdjustCellSize Then
         With DataRange.EntireColumn
             .AutoFit
@@ -674,7 +721,7 @@ Public Function ImportCsvFromFile( _
         With DataRange.Parent.Cells
             .WrapText = True
         End With
-        
+
         If 0 < MaxColumnWidth Then
             For Each TempRange In DataRange.Columns
                 If MaxColumnWidth < TempRange.ColumnWidth Then
@@ -686,9 +733,9 @@ Public Function ImportCsvFromFile( _
         With DataRange.EntireRow
             .AutoFit
         End With
-    
+
     End If
-    
+
     If HeaderRow = 1 Then
         SourceSheet.Delete
         Set ExtraDataRange = Nothing
@@ -700,11 +747,11 @@ Public Function ImportCsvFromFile( _
             With ExtraDataRange.EntireColumn
                 .AutoFit
             End With
-        
+
             With ExtraDataRange.Parent.Cells
                 .WrapText = True
             End With
-    
+
             If 0 < MaxColumnWidth Then
                 For Each TempRange In ExtraDataRange.Columns
                     If MaxColumnWidth < TempRange.ColumnWidth Then
@@ -712,7 +759,7 @@ Public Function ImportCsvFromFile( _
                     End If
                 Next TempRange
             End If
-            
+
             With ExtraDataRange.EntireRow
                 .AutoFit
             End With
@@ -732,7 +779,7 @@ Public Function CreateCsvSheet( _
     Dim TargetBook As Workbook
     Dim TargetSheet As Worksheet
     Dim TargetSheetName As String
-    
+
     Set TargetBook = BaseSheet.Parent
     Set TargetSheet = TargetBook.Sheets.Add(Before:=BaseSheet)
 
@@ -744,7 +791,7 @@ Public Function CreateCsvSheet( _
         TargetSheet.Name = TargetSheetName
     End If
     On Error GoTo 0
-    
+
     Set CreateCsvSheet = TargetSheet
 End Function
 
@@ -766,11 +813,7 @@ Public Sub ConvertCsv( _
 
     If Not IsCsvFile(Filepath) Then
         If IsManual Then
-            MsgBox IIf( _
-                Application.International(xlCountryCode) = 81, _
-                "CSVƒtƒ@ƒCƒ‹‚Å‚Í‚ ‚è‚Ü‚¹‚ñ", _
-                "It's not a CSV file !" _
-            )
+            MsgBox ZhText("5F53 524D 6587 4EF6 4E0D 662F 0020 0043 0053 0056 0020 6587 4EF6 FF0C 8BF7 5148 6253 5F00 0020 0043 0053 0056 0020 6587 4EF6 3002"), vbInformation, ZhText("0043 0053 0056 0020 8F6C 6362")
         End If
         Exit Sub
     End If
@@ -782,15 +825,15 @@ Public Sub ConvertCsv( _
 '    Dim SavedDisplayAlerts As Boolean
 
     With Application
-'       TODOF•s‹ï‡“™‚Å Application.Calculation ‚É•s³‚È’l‚ª“ü‚ê‚ç‚ê‚½ê‡‚É‚ÍƒI[ƒo[ƒtƒ[ƒGƒ‰[‚É‚È‚Á‚½‚è‚·‚é
-'           ¨’l‚ğ•Û‘¶‚µ‚Äg‚¤‚Ì‚Í‚â‚ß‚Ä‚¨‚­
+'       TODOï¼šä¸å…·åˆç­‰ã§ Application.Calculation ã«ä¸æ­£ãªå€¤ãŒå…¥ã‚Œã‚‰ã‚ŒãŸå ´åˆã«ã¯ã‚ªãƒ¼ãƒãƒ¼ãƒ•ãƒ­ãƒ¼ã‚¨ãƒ©ãƒ¼ã«ãªã£ãŸã‚Šã™ã‚‹
+'           â†’å€¤ã‚’ä¿å­˜ã—ã¦ä½¿ã†ã®ã¯ã‚„ã‚ã¦ãŠã
 '        SavedCalculation = .Calculation
 '        SavedEnableEvents = .EnableEvents
 '        SavedScreenUpdating = .ScreenUpdating
 '        SavedDisplayAlerts = .DisplayAlerts
 
         If DebugIsValid Then
-            ' ƒfƒoƒbƒO‚ÍƒfƒtƒHƒ‹ƒg‚Ì‚Ü‚Ü
+            ' ãƒ‡ãƒãƒƒã‚°æ™‚ã¯ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ã¾ã¾
         Else
             .Calculation = xlCalculationManual
             .EnableEvents = False
@@ -798,11 +841,11 @@ Public Sub ConvertCsv( _
             .DisplayAlerts = False
         End If
 
-        .StatusBar = "Start: Converting CSV file to table"
+        .StatusBar = ZhText("5F00 59CB 5C06 0020 0043 0053 0056 0020 8F6C 6362 4E3A 8868 683C 2026")
     End With
 
     If DebugIsValid Then
-        ' ƒfƒoƒbƒO‚ÍƒGƒ‰[‚ğ”­¶‚³‚¹‚é
+        ' ãƒ‡ãƒãƒƒã‚°æ™‚ã¯ã‚¨ãƒ©ãƒ¼ã‚’ç™ºç”Ÿã•ã›ã‚‹
     Else
         On Error GoTo EXIT_SUB
     End If
@@ -811,8 +854,8 @@ Public Sub ConvertCsv( _
     Dim ConvertedCSVFilepath As String
     Dim DataRange As Range
     Dim ExtraDataRange As Range
-    
-    Application.StatusBar = "Reading CSV file ..."
+
+    Application.StatusBar = ZhText("6B63 5728 8BFB 53D6 0020 0043 0053 0056 0020 6587 4EF6 2026")
     CsvText = ReadCsvText(Filepath)
 
     TimeMeasurement.GetLapTime Header:="ReadCsvText(): "
@@ -826,26 +869,26 @@ Public Sub ConvertCsv( _
     Dim PersumedHeaderRow As Long
     Dim PersumedColumnAttributes As Variant
 
-    Application.StatusBar = "Analyzing CSV file ..."
+    Application.StatusBar = ZhText("6B63 5728 5206 6790 0020 0043 0053 0056 0020 6587 4EF6 2026")
     AnalyzeCsvText _
         CsvText:=CsvText, _
         MaxRowNumber:=MaxRowNumber, _
         MaxColumnNumber:=MaxColumnNumber, _
         PersumedHeaderRow:=PersumedHeaderRow, _
         PersumedColumnAttributes:=PersumedColumnAttributes
-    
+
     If DebugIsValid Then Debug.Print "AnalyzeCsvText():", MaxRowNumber, MaxColumnNumber, PersumedHeaderRow
 
     TimeMeasurement.GetLapTime Header:="AnalyzeCsvText(): "
 
-    Application.StatusBar = "Converting CSV file to UTF-8 ..."
+    Application.StatusBar = ZhText("6B63 5728 8F6C 6362 4E3A 0020 0055 0054 0046 002D 0038 0020 7F16 7801 2026")
     ConvertedCSVFilepath = CreateTextFile(CsvText)
 
     TimeMeasurement.GetLapTime Header:="CreateTextFile(): "
 
     If DebugIsValid Then Debug.Print "ConvertedCSVFilepath: " & ConvertedCSVFilepath
 
-    Application.StatusBar = "Converting CSV file to tables ..."
+    Application.StatusBar = ZhText("6B63 5728 751F 6210 8868 683C 2026")
     Set DataRange = ImportCsvFromFile( _
         ConvertedCSVFilepath, _
         MaxColumnNumber:=MaxColumnNumber, _
@@ -859,11 +902,7 @@ Public Sub ConvertCsv( _
     If DataRange Is Nothing Then
         Debug.Print "DataRange Is Nothing: It failed to convert or has already converted !"
         If IsManual Then
-            MsgBox IIf( _
-                Application.International(xlCountryCode) = 81, _
-                "Šù‚É•ÏŠ·Ï‚İ‚Ì‚æ‚¤‚Å‚·", _
-                "It failed to convert or has already converted !" _
-            )
+            MsgBox ZhText("6587 4EF6 53EF 80FD 5DF2 7ECF 8F6C 6362 FF0C 6216 672C 6B21 8F6C 6362 672A 80FD 5B8C 6210 3002"), vbInformation, ZhText("0043 0053 0056 0020 8F6C 6362")
         End If
     Else
         If DebugIsValid Then
@@ -875,7 +914,7 @@ Public Sub ConvertCsv( _
     End If
 
     If DebugIsValid Then
-        ' ƒfƒoƒbƒO—p‚Æ‚µ‚Ä•ÏŠ·‚µ‚½ CSV ƒtƒ@ƒCƒ‹‚ğc‚µ‚Ä‚¨‚­
+        ' ãƒ‡ãƒãƒƒã‚°ç”¨ã¨ã—ã¦å¤‰æ›ã—ãŸ CSV ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ®‹ã—ã¦ãŠã
     Else
         Kill ConvertedCSVFilepath
     End If

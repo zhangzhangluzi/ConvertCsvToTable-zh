@@ -1,4 +1,4 @@
-Attribute VB_Name = "StdCsvOpenerControl"
+ï»¿Attribute VB_Name = "StdCsvOpenerControl"
 Option Explicit
 
 Private RibbonUI As IRibbonUI
@@ -99,78 +99,62 @@ End Sub
 
 Sub RibbonControl_StartCsvOpener_getEnabled(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
     Dim CsvOpenerControl As New ClsCsvOpenerControl
-    
+
     ReturnedVal = Not CsvOpenerControl.CsvOpenerIsValid
 End Sub
 
 Sub RibbonControl_StopCsvOpener_getEnabled(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
     Dim CsvOpenerControl As New ClsCsvOpenerControl
-    
+
     ReturnedVal = CsvOpenerControl.CsvOpenerIsValid
 End Sub
 
 Sub RibbonControl_ConvertCsv_getEnabled(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
     Dim CsvOpenerControl As New ClsCsvOpenerControl
-    
+
     ReturnedVal = True
     'ReturnedVal = Not CsvOpenerControl.CsvOpenerIsValid
     'ReturnedVal = CsvOpenerControl.IsUnconvertedCSV
-    ' TODO: •ÏŠ·‰Â”\‚©‚Ç‚¤‚©‚Ì”»’è‚ÆXVƒ^ƒCƒ~ƒ“ƒO‚ğ‚Í‚©‚é‚Ì‚ª“ï‚µ‚¢‚Ì‚Å•Û—¯
+    ' TODO: å¤‰æ›å¯èƒ½ã‹ã©ã†ã‹ã®åˆ¤å®šã¨æ›´æ–°ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã‚’ã¯ã‹ã‚‹ã®ãŒé›£ã—ã„ã®ã§ä¿ç•™
 End Sub
 
 Sub RibbonControl_ApplicationName(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "CSV•ÏŠ·"
-        Case Else: ReturnedVal = "CSV Conversion"
-    End Select
+    ReturnedVal = ZhText("0043 0053 0056 0020 8F6C 6362")
 End Sub
 
 Sub RibbonControl_ControlLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "ƒRƒ“ƒgƒ[ƒ‹"
-        Case Else: ReturnedVal = "Control"
-    End Select
+    ReturnedVal = ZhText("81EA 52A8 8F6C 6362")
 End Sub
 
 Sub RibbonControl_ToolsLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "‘€ì"
-        Case Else: ReturnedVal = "Tools"
-    End Select
+    ReturnedVal = ZhText("5DE5 5177")
 End Sub
 
 Sub RibbonControl_StartAutomaticConversionLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "©“®•ÏŠ·ŠJn"
-        Case Else: ReturnedVal = "Start Automatic Conversion"
-    End Select
+    ReturnedVal = ZhText("5F00 542F 81EA 52A8 8F6C 6362")
 End Sub
 
 Sub RibbonControl_StopAutomaticConversionLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "©“®•ÏŠ·’â~"
-        Case Else: ReturnedVal = "Stop Automatic Conversion"
-    End Select
+    ReturnedVal = ZhText("505C 6B62 81EA 52A8 8F6C 6362")
 End Sub
 
 Sub RibbonControl_ManualConversionLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "è“®•ÏŠ·"
-        Case Else: ReturnedVal = "Manual Conversion"
-    End Select
+    ReturnedVal = ZhText("624B 52A8 8F6C 6362")
 End Sub
 
 Sub RibbonControl_TextToNumberConversionLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "•¶š‚ğ”’l‚É•ÏŠ·"
-        Case Else: ReturnedVal = "Text to Number Conversion"
-    End Select
+    ReturnedVal = ZhText("6587 672C 8F6C 6570 5B57")
 End Sub
 
 Sub RibbonControl_TextToLinkConversionLabel(ByVal RibbonControl As IRibbonControl, ByRef ReturnedVal)
-    Select Case Application.International(xlCountryCode)
-        Case 81: ReturnedVal = "ƒnƒCƒp[ƒŠƒ“ƒN‚É•ÏŠ·"
-        Case Else: ReturnedVal = "Text to HyperLink Conversion"
-    End Select
+    ReturnedVal = ZhText("6587 672C 8F6C 8D85 94FE 63A5")
 End Sub
 
+
+' ä¸­æ–‡æ ‡ç­¾é€šè¿‡ Unicode ç ä½ç”Ÿæˆï¼Œé¿å… VBA å·¥ç¨‹ä»£ç é¡µå½±å“æ±‰å­—ã€‚
+Public Function ZhText(ByVal HexCodes As String) As String
+    Dim CodePoint As Variant
+    For Each CodePoint In Split(HexCodes, " ")
+        ZhText = ZhText & ChrW(CLng("&H" & CodePoint))
+    Next CodePoint
+End Function

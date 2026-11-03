@@ -1,4 +1,4 @@
-VERSION 1.0 CLASS
+ï»¿VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Private PrivateTimeMeasurementIsValid
+Private PrivateTimeMeasurementIsValid As Boolean
 Private StartTime As Double
 Private LastTime As Double
 Private EndTime As Double
@@ -30,7 +30,7 @@ Public Property Let TimeMeasurementIsValid( _
 End Property
 
 Public Property Get TimeMeasurementIsValid() As Boolean
-    Set TimeMeasurementIsValid = PrivateTimeMeasurementIsValid
+    TimeMeasurementIsValid = PrivateTimeMeasurementIsValid
 End Property
 
 Public Sub ResetTimer()
@@ -47,7 +47,7 @@ Public Function GetLapTime(Optional PrintTime As Boolean = True, Optional Header
     If EndTime < LastTime Then EndTime = EndTime + 24 * 60 * 60
     LapTime = EndTime - LastTime
 
-    If PrintTime Then Debug.Print Header & Format(LapTime, "0.0000") & "•b"
+    If PrintTime Then Debug.Print Header & Format(LapTime, "0.0000") & "ç§’"
 
     GetLapTime = LapTime
 
@@ -63,7 +63,7 @@ Public Function GetTotalTime(Optional PrintTime As Boolean = True, Optional Head
     If EndTime < StartTime Then EndTime = EndTime + 24 * 60 * 60
     TotalTime = EndTime - StartTime
 
-    If PrintTime Then Debug.Print Header & Format(TotalTime, "0.0000") & "•b"
+    If PrintTime Then Debug.Print Header & Format(TotalTime, "0.0000") & "ç§’"
 
     GetTotalTime = TotalTime
 End Function
